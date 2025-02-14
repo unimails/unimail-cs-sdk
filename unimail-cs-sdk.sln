@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35806.99 d17.13
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "unimail-cs-sdk", "unimail-cs-sdk\unimail-cs-sdk.csproj", "{6E7F56E4-FDCA-4BED-B25D-7678651B42F2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnimailCsSdk", "unimail-cs-sdk\UnimailCsSdk.csproj", "{6E7F56E4-FDCA-4BED-B25D-7678651B42F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "localTest", "localTest\localTest.csproj", "{CA17ECB2-8137-40A6-8255-2A2194AE384E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{6E7F56E4-FDCA-4BED-B25D-7678651B42F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E7F56E4-FDCA-4BED-B25D-7678651B42F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E7F56E4-FDCA-4BED-B25D-7678651B42F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA17ECB2-8137-40A6-8255-2A2194AE384E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA17ECB2-8137-40A6-8255-2A2194AE384E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA17ECB2-8137-40A6-8255-2A2194AE384E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA17ECB2-8137-40A6-8255-2A2194AE384E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,31 +1,31 @@
 # unimail-cs-sdk
 
-This is a c# SDK for Unimail. Quickly integrate into your project
+unimail 的 cs 语言 sdk, 快速集成到你的项目
 
-[中文文档](README_zh.md)
+[english docs](README.md)
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
 <!-- code_chunk_output -->
 
 - [unimail-cs-sdk](#unimail-cs-sdk)
-  - [simple usage](#simple-usage)
+  - [简单使用](#简单使用)
   - [api docs](#api-docs)
-  - [support language](#support-language)
+  - [支持的语言](#支持的语言)
 
 <!-- /code_chunk_output -->
 
-## simple usage
+## 简单使用
 
-- install
+- 安装
 
 ```shell
 <PackageReference Include="UnimailCsSdk" Version="0.1.0" />
 ```
 
-- init a unimail client
+- 初始化客户端
 
-you need a authorization key.
+你需要申请一个 key
 
 ```cs
 internal class Program
@@ -43,20 +43,25 @@ internal class Program
         var checkConnection = await client.CheckConnection();
         if (!checkConnection)
         {
-            Console.WriteLine("连接失败");
+            Console.WriteLine("connect error");
             return;
         }
-        Console.WriteLine("连接成功");
+        Console.WriteLine("connect success");
+
+
+
+
+        Console.WriteLine(sendResult);
     }
 }
 ```
 
-- send email
+- 发邮件
 
-example
-receiver: aaa@gmail.com  
-email subject: email subject  
-email content: this is a email content
+例如
+收件人: aaa@gmail.com  
+邮件标题: email subject  
+邮件正文: this is a email content
 
 ```cs
     var sendResult = await client.SendEmail("i-curve@qq.com", "cs sdk test",
@@ -67,12 +72,12 @@ email content: this is a email content
     }
 ```
 
-- batch send email
+- 批量发送邮件
 
-example
-receivers: aaa@gmail.com,bbb@gmail.com  
-email subject: email subject  
-email content: this is a email content
+例如
+收件人: aaa@gmail.com,bbb@gmail.com  
+邮件标题: email subject  
+邮件正文: this is a email content
 
 ```cs
     var sendResult = await client.BatchSendEmail(new List<string>()
@@ -108,9 +113,9 @@ send email to receiver. if you have many receiver, you can concat the receiver b
 
 like SendEmail, but receivers is a slice
 
-## support language
+## 支持的语言
 
-chinese is the default language for the sdk.
+sdk 默认返回的 msg 为中文
 
 - [x] english (en)
 - [x] simple chinese (zh)
@@ -119,4 +124,4 @@ chinese is the default language for the sdk.
 - [x] thai (th)
 - [x] gujarati (gu)
 
-if you want to support other language, please open a issue.
+如果你需要添加了更多语言，欢迎提 issue
