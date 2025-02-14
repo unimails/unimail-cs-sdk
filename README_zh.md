@@ -20,7 +20,7 @@ unimail 的 cs 语言 sdk, 快速集成到你的项目
 - 安装
 
 ```shell
-<PackageReference Include="UnimailCsSdk" Version="0.1.0" />
+<PackageReference Include="UnimailCsSdk" Version="0.1.1" />
 ```
 
 - 初始化客户端

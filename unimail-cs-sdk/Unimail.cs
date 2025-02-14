@@ -163,7 +163,7 @@ namespace UnimailCsSdk
                 }
                 string responseData = await response.Content.ReadAsStringAsync();
                 var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseData);
-                return new UnimailError(unimailReturn.Code == 0, unimailReturn.Msg);
+                return new UnimailError(unimailReturn.Code != 0, unimailReturn.Msg);
             } catch (HttpRequestException e)
             {
                 return new UnimailError(false, "unimail network error");
@@ -194,7 +194,7 @@ namespace UnimailCsSdk
                 }
                 string responseData = await response.Content.ReadAsStringAsync();
                 var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseData);
-                return new UnimailError(unimailReturn.Code == 0, unimailReturn.Msg);
+                return new UnimailError(unimailReturn.Code != 0, unimailReturn.Msg);
             } catch (HttpRequestException e)
             {
                 return new UnimailError(false, "unimail network error");
