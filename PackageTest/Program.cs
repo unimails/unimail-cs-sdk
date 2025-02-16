@@ -6,13 +6,13 @@
         {
             Console.WriteLine("Hello, World!");
             var client = UnimailCsSdk.Factory.New("");
-            var checkConnection = await client.CheckConnection();
+            var checkConnection = client.CheckConnection();
             if (!checkConnection)
             {
                 Console.WriteLine("连接失败");
             }
 
-            var result = await client.SendEmail("i_curve@qq.com", "nuget package test", "asdfival");
+            var result = client.SendEmail("i_curve@qq.com", "nuget package test", "asdfival");
             Console.WriteLine($"?: {!result.IsError}, msg: {result.Msg}");
         }
     }

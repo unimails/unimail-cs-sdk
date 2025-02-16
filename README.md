@@ -40,7 +40,7 @@ internal class Program
             return;
         }
 
-        var checkConnection = await client.CheckConnection();
+        var checkConnection = await client.CheckConnectionAsync();
         if (!checkConnection)
         {
             Console.WriteLine("连接失败");
@@ -59,7 +59,7 @@ email subject: email subject
 email content: this is a email content
 
 ```cs
-    var sendResult = await client.SendEmail("i-curve@qq.com", "cs sdk test",
+    var sendResult = await client.SendEmailAsync("i-curve@qq.com", "cs sdk test",
         "this is a email from unimail-cs-sdk project.");
     if (sendResult.IsError)
     {
@@ -75,7 +75,7 @@ email subject: email subject
 email content: this is a email content
 
 ```cs
-    var sendResult = await client.BatchSendEmail(new List<string>()
+    var sendResult = await client.BatchSendEmailAsync(new List<string>()
         {
             "i-curve@qq.com", "i_curve@qq.com"
         }, "cs batch sdk test",
@@ -96,15 +96,15 @@ init a client by key
 
 set language for the client, default is zh
 
-3. Task<Boolean> client.CheckConnect()
+3. Task<Boolean> client.CheckConnectAsync()
 
 check the host and key is ok
 
-4. UnimailError client.SendEmail(string receiver,string subject, string content)
+4. UnimailError client.SendEmailAsync(string receiver,string subject, string content)
 
 send email to receiver. if you have many receiver, you can concat the receiver by ";" or use BatchSendEmail
 
-5. UnimailError client.BatchSendEmail(List<string> receivers,string subject,string content)
+5. UnimailError client.BatchSendEmailAsync(List<string> receivers,string subject,string content)
 
 like SendEmail, but receivers is a slice
 
