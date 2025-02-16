@@ -70,11 +70,29 @@ namespace UnimailCsSdk
         /// <returns></returns>
         UnimailError SetLanguage(string lang);
 
-        Task<Boolean> CheckConnection();
+        Task<Boolean> CheckConnectionAsync();
 
-        Task<UnimailError> SendEmail(string receiver, string subject, string content);
+        Boolean CheckConnection();
 
-        Task<UnimailError> BatchSendEmail(List<string> receivers, string subject, string content);
+        /// <summary>
+        /// async Send email
+        /// </summary>
+        /// <param name="receiver"></param>
+        /// <param name="subject">email title</param>
+        /// <param name="content">email content</param>
+        Task<UnimailError> SendEmailAsync(string receiver, string subject, string content);
+
+        /// <summary>
+        /// Send email
+        /// </summary>
+        /// <param name="receiver"></param>
+        /// <param name="subject">email title</param>
+        /// <param name="content">email content</param>
+        UnimailError SendEmail(string receiver, string subject, string content);
+
+        Task<UnimailError> BatchSendEmailAsync(List<string> receivers, string subject, string content);
+
+        UnimailError BatchSendEmail(List<string> receivers, string subject, string content);
     }
 
     internal class unimailClient : UnimailClient
@@ -105,7 +123,7 @@ namespace UnimailCsSdk
             return new UnimailError(false, null);
         }
 
-        public async Task<Boolean> CheckConnection()
+        public async Task<Boolean> CheckConnectionAsync()
         {
             try
             {
@@ -133,13 +151,34 @@ namespace UnimailCsSdk
             }
         }
 
-        /// <summary>
-        /// Send email
-        /// </summary>
-        /// <param name="receiver"></param>
-        /// <param name="subject">email title</param>
-        /// <param name="content">email content</param>
-        public async Task<UnimailError> SendEmail(string receiver, string subject, string content)
+        public Boolean CheckConnection()
+        {
+            try
+            {
+                var data = JsonSerializer.Serialize(new
+                {
+                    authorization = this.Key
+                });
+                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/api/email/checkConnection");
+                // 设置 Accept-Language 头
+                req.Headers.Add("Accept-Language", this.lang);
+                req.Content = new StringContent(data, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = client.SendAsync(req).GetAwaiter().GetResult();
+                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                if (!response.IsSuccessStatusCode)
+                {
+                    return false;
+                }
+                var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseBody);
+                return unimailReturn.Code == 0;
+            } catch (HttpRequestException e)
+            {
+                return false;
+            }
+        }
+
+        public async Task<UnimailError> SendEmailAsync(string receiver, string subject, string content)
         {
             try
             {
@@ -170,7 +209,38 @@ namespace UnimailCsSdk
             }
         }
 
-        public async Task<UnimailError> BatchSendEmail(List<string> receivers, string subject, string content)
+        public UnimailError SendEmail(string receiver, string subject, string content)
+        {
+            try
+            {
+                var data = JsonSerializer.Serialize(new
+                {
+                    authorization = this.Key,
+                    receiver = receiver,
+                    title = subject,
+                    content = content
+                });
+                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/api/email/sendEmail");
+                // 设置 Accept-Language 头
+                req.Headers.Add("Accept-Language", this.lang);
+                req.Content = new StringContent(data, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = client.SendAsync(req).GetAwaiter().GetResult();
+                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new UnimailError(false, "unimail network error");
+                }
+                string responseData = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseData);
+                return new UnimailError(unimailReturn.Code != 0, unimailReturn.Msg);
+            } catch (HttpRequestException e)
+            {
+                return new UnimailError(false, "unimail network error");
+            }
+        }
+
+        public async Task<UnimailError> BatchSendEmailAsync(List<string> receivers, string subject, string content)
         {
             try
             {
@@ -193,6 +263,37 @@ namespace UnimailCsSdk
                     return new UnimailError(false, "unimail network error");
                 }
                 string responseData = await response.Content.ReadAsStringAsync();
+                var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseData);
+                return new UnimailError(unimailReturn.Code != 0, unimailReturn.Msg);
+            } catch (HttpRequestException e)
+            {
+                return new UnimailError(false, "unimail network error");
+            }
+        }
+
+        public UnimailError BatchSendEmail(List<string> receivers, string subject, string content)
+        {
+            try
+            {
+                var data = JsonSerializer.Serialize(new
+                {
+                    authorization = this.Key,
+                    receivers = receivers,
+                    title = subject,
+                    content = content
+                });
+                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/api/email/batchSendEmail");
+                // 设置 Accept-Language 头
+                req.Headers.Add("Accept-Language", this.lang);
+                req.Content = new StringContent(data, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = client.SendAsync(req).GetAwaiter().GetResult();
+                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new UnimailError(false, "unimail network error");
+                }
+                string responseData = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                 var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseData);
                 return new UnimailError(unimailReturn.Code != 0, unimailReturn.Msg);
             } catch (HttpRequestException e)
