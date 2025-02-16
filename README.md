@@ -20,7 +20,7 @@ This is a c# SDK for Unimail. Quickly integrate into your project
 - install
 
 ```shell
-<PackageReference Include="UnimailCsSdk" Version="0.1.1" />
+<PackageReference Include="UnimailCsSdk" Version="0.2.0" />
 ```
 
 - init a unimail client
