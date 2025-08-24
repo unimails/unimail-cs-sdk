@@ -9,7 +9,7 @@
 		<Copyright>BSD 3-Clause License</Copyright>
 		<PackageProjectUrl>https://github.com/unimails/unimail-cs-sdk</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<Version>0.2.0</Version>
+		<Version>0.2.1</Version>
 		<RepositoryUrl>https://github.com/unimails/unimail-cs-sdk</RepositoryUrl>
 		<PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
