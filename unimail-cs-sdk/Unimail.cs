@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UnimailCsSdk {
@@ -17,7 +19,9 @@ namespace UnimailCsSdk {
     }
 
     internal class UnimailReturn {
+        [JsonPropertyName("code")]
         public int Code { get; set; }
+        [JsonPropertyName("msg")]
         public string Msg { get; set; }
     }
 
@@ -60,29 +64,29 @@ namespace UnimailCsSdk {
         /// <returns></returns>
         UnimailError SetLanguage(string lang);
 
-        Task<Boolean> CheckConnectionAsync();
-
-        Boolean CheckConnection();
+        /// <summary>
+        /// check network connection
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<bool> CheckConnectionAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// async Send email
+        /// async send email
         /// </summary>
         /// <param name="receiver"></param>
         /// <param name="subject">email title</param>
         /// <param name="content">email content</param>
-        Task<UnimailError> SendEmailAsync(string receiver, string subject, string content);
-
+        Task<UnimailError> SendEmailAsync(string receiver, string subject, string content, CancellationToken cancellationToken = default);
         /// <summary>
-        /// Send email
+        /// async batch send email
         /// </summary>
-        /// <param name="receiver"></param>
-        /// <param name="subject">email title</param>
+        /// <param name="receivers">receiver list</param>
+        /// <param name="subject">email subject</param>
         /// <param name="content">email content</param>
-        UnimailError SendEmail(string receiver, string subject, string content);
-
-        Task<UnimailError> BatchSendEmailAsync(List<string> receivers, string subject, string content);
-
-        UnimailError BatchSendEmail(List<string> receivers, string subject, string content);
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<UnimailError> BatchSendEmailAsync(List<string> receivers, string subject, string content, CancellationToken cancellationToken = default);
     }
 
     internal class unimailClient : UnimailClient {
@@ -96,7 +100,7 @@ namespace UnimailCsSdk {
             "en", "zh","vi", "th", "gu", "id"
         };
 
-        public unimailClient(string key, string host = "https://unimail-back.allcloud.top") {
+        public unimailClient(string key, string host = "https://uniapi.allcloud.top") {
             this.Key = key;
             this.Host = host;
         }
@@ -109,17 +113,17 @@ namespace UnimailCsSdk {
             return new UnimailError(false, null);
         }
 
-        public async Task<Boolean> CheckConnectionAsync() {
+        public async Task<Boolean> CheckConnectionAsync(CancellationToken cancellationToken = default) {
             try {
                 var data = JsonSerializer.Serialize(new {
                     authorization = this.Key
                 });
-                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/api/email/checkConnection");
+                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/checkConnection");
                 // 设置 Accept-Language 头
                 req.Headers.Add("Accept-Language", this.lang);
                 req.Content = new StringContent(data, Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = await client.SendAsync(req);
+                HttpResponseMessage response = await client.SendAsync(req, cancellationToken);
                 string responseBody = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode) {
                     return false;
@@ -132,29 +136,7 @@ namespace UnimailCsSdk {
             }
         }
 
-        public Boolean CheckConnection() {
-            try {
-                var data = JsonSerializer.Serialize(new {
-                    authorization = this.Key
-                });
-                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/api/email/checkConnection");
-                // 设置 Accept-Language 头
-                req.Headers.Add("Accept-Language", this.lang);
-                req.Content = new StringContent(data, Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response = client.SendAsync(req).GetAwaiter().GetResult();
-                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                if (!response.IsSuccessStatusCode) {
-                    return false;
-                }
-                var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseBody);
-                return unimailReturn.Code == 0;
-            } catch (HttpRequestException e) {
-                return false;
-            }
-        }
-
-        public async Task<UnimailError> SendEmailAsync(string receiver, string subject, string content) {
+        public async Task<UnimailError> SendEmailAsync(string receiver, string subject, string content, CancellationToken cancellationToken = default) {
             try {
                 var data = JsonSerializer.Serialize(new {
                     authorization = this.Key,
@@ -162,12 +144,12 @@ namespace UnimailCsSdk {
                     title = subject,
                     content = content
                 });
-                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/api/email/sendEmail");
+                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/sendEmail");
                 // 设置 Accept-Language 头
                 req.Headers.Add("Accept-Language", this.lang);
                 req.Content = new StringContent(data, Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = await client.SendAsync(req);
+                HttpResponseMessage response = await client.SendAsync(req, cancellationToken);
                 string responseBody = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode) {
                     return new UnimailError(false, "unimail network error");
@@ -180,33 +162,7 @@ namespace UnimailCsSdk {
             }
         }
 
-        public UnimailError SendEmail(string receiver, string subject, string content) {
-            try {
-                var data = JsonSerializer.Serialize(new {
-                    authorization = this.Key,
-                    receiver = receiver,
-                    title = subject,
-                    content = content
-                });
-                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/api/email/sendEmail");
-                // 设置 Accept-Language 头
-                req.Headers.Add("Accept-Language", this.lang);
-                req.Content = new StringContent(data, Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response = client.SendAsync(req).GetAwaiter().GetResult();
-                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                if (!response.IsSuccessStatusCode) {
-                    return new UnimailError(false, "unimail network error");
-                }
-                string responseData = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseData);
-                return new UnimailError(unimailReturn.Code != 0, unimailReturn.Msg);
-            } catch (HttpRequestException e) {
-                return new UnimailError(false, "unimail network error");
-            }
-        }
-
-        public async Task<UnimailError> BatchSendEmailAsync(List<string> receivers, string subject, string content) {
+        public async Task<UnimailError> BatchSendEmailAsync(List<string> receivers, string subject, string content, CancellationToken cancellationToken = default) {
             try {
                 var data = JsonSerializer.Serialize(new {
                     authorization = this.Key,
@@ -214,12 +170,12 @@ namespace UnimailCsSdk {
                     title = subject,
                     content = content
                 });
-                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/api/email/batchSendEmail");
+                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/batchSendEmail");
                 // 设置 Accept-Language 头
                 req.Headers.Add("Accept-Language", this.lang);
                 req.Content = new StringContent(data, Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = await client.SendAsync(req);
+                HttpResponseMessage response = await client.SendAsync(req, cancellationToken);
                 string responseBody = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode) {
                     return new UnimailError(false, "unimail network error");
@@ -232,31 +188,6 @@ namespace UnimailCsSdk {
             }
         }
 
-        public UnimailError BatchSendEmail(List<string> receivers, string subject, string content) {
-            try {
-                var data = JsonSerializer.Serialize(new {
-                    authorization = this.Key,
-                    receivers = receivers,
-                    title = subject,
-                    content = content
-                });
-                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/api/email/batchSendEmail");
-                // 设置 Accept-Language 头
-                req.Headers.Add("Accept-Language", this.lang);
-                req.Content = new StringContent(data, Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response = client.SendAsync(req).GetAwaiter().GetResult();
-                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                if (!response.IsSuccessStatusCode) {
-                    return new UnimailError(false, "unimail network error");
-                }
-                string responseData = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseData);
-                return new UnimailError(unimailReturn.Code != 0, unimailReturn.Msg);
-            } catch (HttpRequestException e) {
-                return new UnimailError(false, "unimail network error");
-            }
-        }
         // todo
         public UnimailError CheckResult(string key) {
             return new UnimailError(false, "server error");

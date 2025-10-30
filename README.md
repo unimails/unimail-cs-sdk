@@ -20,7 +20,7 @@ This is a c# SDK for Unimail. Quickly integrate into your project
 - install
 
 ```shell
-<PackageReference Include="UnimailCsSdk" Version="0.2.0" />
+<PackageReference Include="UnimailCsSdk" Version="0.3.0" />
 ```
 
 - init a unimail client
@@ -100,11 +100,11 @@ set language for the client, default is zh
 
 check the host and key is ok
 
-4. UnimailError client.SendEmailAsync(string receiver,string subject, string content)
+4. Task<UnimailError> client.SendEmailAsync(string receiver,string subject, string content)
 
 send email to receiver. if you have many receiver, you can concat the receiver by ";" or use BatchSendEmail
 
-5. UnimailError client.BatchSendEmailAsync(List<string> receivers,string subject,string content)
+5. Task<UnimailError> client.BatchSendEmailAsync(List<string> receivers,string subject,string content)
 
 like SendEmail, but receivers is a slice
 
