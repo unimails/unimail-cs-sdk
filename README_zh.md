@@ -1,6 +1,6 @@
 # unimail-cs-sdk
 
-> 当前分支sdk的版本是v1, 此分支不再进行功能更新, 如果新用户请参考主分支master
+> 当前sdk的版本是v2, 如果你需要用以前的v1版本, 请切换v1分支
 
 unimail 的 cs 语言 sdk, 快速集成到你的项目
 
@@ -11,18 +11,18 @@ unimail 的 cs 语言 sdk, 快速集成到你的项目
 <!-- code_chunk_output -->
 
 - [unimail-cs-sdk](#unimail-cs-sdk)
-  - [简单使用](#简单使用)
+  - [使用](#使用)
   - [api docs](#api-docs)
   - [支持的语言](#支持的语言)
 
 <!-- /code_chunk_output -->
 
-## 简单使用
+## 使用
 
 - 安装
 
 ```shell
-<PackageReference Include="UnimailCsSdk" Version="0.2.0" />
+<PackageReference Include="UnimailCsSdk" Version="1.0.0" />
 ```
 
 - 初始化客户端
@@ -42,49 +42,35 @@ internal class Program
             return;
         }
 
-        var checkConnection = await client.CheckConnectionAsync();
+        var checkConnection = await client.CheckConnectionAsync().GetAwaiter().GetResult();
         if (!checkConnection)
         {
             Console.WriteLine("connect error");
             return;
         }
         Console.WriteLine("connect success");
-        Console.WriteLine(sendResult);
     }
 }
 ```
 
 - 发邮件
 
-例如
-收件人: aaa@gmail.com  
-邮件标题: email subject  
-邮件正文: this is a email content
-
 ```cs
-    var sendResult = await client.SendEmailAsync("i-curve@qq.com", "cs sdk test",
-        "this is a email from unimail-cs-sdk project.");
-    if (sendResult.IsError)
-    {
-        Console.WriteLine($"send email fail, the message is {sendResult.Msg}");
-    }
-```
-
-- 批量发送邮件
-
-例如
-收件人: aaa@gmail.com,bbb@gmail.com  
-邮件标题: email subject  
-邮件正文: this is a email content
-
-```cs
-    var sendResult = await client.BatchSendEmailAsync(new List<string>()
-        {
-            "i-curve@qq.com", "i_curve@qq.com"
-        }, "cs batch sdk test",
-        "this is a batch email from unimail-cs-sdk project");
-    if (sendResult.IsError)
-    {
+    var req = new UnimailReq {
+        // From = "通知",
+        Receivers = new List<string> { "email1", "email2" },
+        // Cc = "",
+        // Bcc = "",
+        Subject = "cs sdk test",
+        TxtContent = "this is an email from unimail-cs-sdk project",
+        HtmlContent = "<div>html content</div>"
+    };
+    // 添加文件附件
+    req.AppendFile("test.txt", "./attachment.txt");
+    // 添加uri附件
+    // req.AppendUri("text2.txt", "https://...");
+    var sendResult = client.SendEmailAsync(req).GetAwaiter().GetResult();
+    if (sendResult.IsError) {
         Console.WriteLine($"send email fail, the message is {sendResult.Msg}");
     }
 ```
@@ -103,13 +89,9 @@ set language for the client, default is zh
 
 check the host and key is ok
 
-4. UnimailError client.SendEmailAsync(string receiver,string subject, string content)
+4. Task<UnimailError> client.SendEmailAsync(UnimailReq req)
 
-send email to receiver. if you have many receiver, you can concat the receiver by ";" or use BatchSendEmail
-
-5. UnimailError client.BatchSendEmailAsync(List<string> receivers,string subject,string content)
-
-like SendEmail, but receivers is a slice
+please see usage
 
 ## 支持的语言
 

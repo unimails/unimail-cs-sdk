@@ -1,6 +1,6 @@
 # unimail-cs-sdk
 
-> The current branch SDK version is v1. This branch will no longer receive functional updates. For new users, please refer to the main branch "master".
+> The current SDK version is v2. If you need to use the previous v1 version, please switch to the v1 branch.
 
 This is a c# SDK for Unimail. Quickly integrate into your project
 
@@ -22,7 +22,7 @@ This is a c# SDK for Unimail. Quickly integrate into your project
 - install
 
 ```shell
-<PackageReference Include="UnimailCsSdk" Version="0.3.0" />
+<PackageReference Include="UnimailCsSdk" Version="1.0.0" />
 ```
 
 - init a unimail client
@@ -42,48 +42,35 @@ internal class Program
             return;
         }
 
-        var checkConnection = await client.CheckConnectionAsync();
+        var checkConnection = await client.CheckConnectionAsync()GetAwaiter().GetResult();
         if (!checkConnection)
         {
-            Console.WriteLine("连接失败");
+            Console.WriteLine("connect error");
             return;
         }
-        Console.WriteLine("连接成功");
+        Console.WriteLine("connect success");
     }
 }
 ```
 
 - send email
 
-example
-receiver: aaa@gmail.com  
-email subject: email subject  
-email content: this is a email content
-
 ```cs
-    var sendResult = await client.SendEmailAsync("i-curve@qq.com", "cs sdk test",
-        "this is a email from unimail-cs-sdk project.");
-    if (sendResult.IsError)
-    {
-        Console.WriteLine($"send email fail, the message is {sendResult.Msg}");
-    }
-```
-
-- batch send email
-
-example
-receivers: aaa@gmail.com,bbb@gmail.com  
-email subject: email subject  
-email content: this is a email content
-
-```cs
-    var sendResult = await client.BatchSendEmailAsync(new List<string>()
-        {
-            "i-curve@qq.com", "i_curve@qq.com"
-        }, "cs batch sdk test",
-        "this is a batch email from unimail-cs-sdk project");
-    if (sendResult.IsError)
-    {
+    var req = new UnimailReq {
+        // From = "Notice",
+        Receivers = new List<string> { "email1", "email2" },
+        // Cc = "",
+        // Bcc = "",
+        Subject = "cs sdk test",
+        TxtContent = "this is an email from unimail-cs-sdk project",
+        HtmlContent = "<div>html content</div>"
+    };
+    // add file attachment
+    req.AppendFile("test.txt", "./attachment.txt");
+    // add uri attachment
+    // req.AppendUri("text2.txt", "https://...");
+    var sendResult = client.SendEmailAsync(req).GetAwaiter().GetResult();
+    if (sendResult.IsError) {
         Console.WriteLine($"send email fail, the message is {sendResult.Msg}");
     }
 ```
@@ -102,13 +89,9 @@ set language for the client, default is zh
 
 check the host and key is ok
 
-4. Task<UnimailError> client.SendEmailAsync(string receiver,string subject, string content)
+4. Task<UnimailError> client.SendEmailAsync(UnimailReq req)
 
-send email to receiver. if you have many receiver, you can concat the receiver by ";" or use BatchSendEmail
-
-5. Task<UnimailError> client.BatchSendEmailAsync(List<string> receivers,string subject,string content)
-
-like SendEmail, but receivers is a slice
+please see usage
 
 ## support language
 

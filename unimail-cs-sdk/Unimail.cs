@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -8,6 +10,60 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace UnimailCsSdk {
+    public class Variables {
+        public const string Version = "1.0.0";
+        public const long TimeOut = 120;
+        public const string Domain = "https://uniapi.allcloud.top";
+    }
+    public class UnimailReq {
+        public string From { get; set; }
+        public List<string> Receivers { get; set; } = new List<string>();
+        public string Cc { get; set; }
+        public string Bcc { get; set; }
+        public string Subject { get; set; }
+        public string TxtContent { get; set; }
+        public string HtmlContent { get; set; }
+        public List<EmailAttachment> Attachments { get; set; } = new List<EmailAttachment>();
+
+        public UnimailError AppendAttachment(EmailAttachment emailAttachment) {
+            if (emailAttachment == null) {
+                return new UnimailError(true, "unimail: attachment is empty");
+            }
+
+            if (emailAttachment.FileAttachment == null && string.IsNullOrWhiteSpace(emailAttachment.UrlAttachment)) {
+                return new UnimailError(true, "unimail: attachment is empty");
+            }
+
+            Attachments.Add(emailAttachment);
+            return new UnimailError(false, null);
+        }
+
+        public UnimailError AppendFile(string name, string path) {
+            try {
+                var content = File.ReadAllBytes(path);
+                return AppendAttachment(new EmailAttachment {
+                    Name = name,
+                    FileAttachment = content
+                });
+            } catch (Exception e) {
+                return new UnimailError(true, $"unimail: failed to read file: {e.Message}");
+            }
+        }
+
+        public UnimailError AppendUri(string name, string url) {
+            return AppendAttachment(new EmailAttachment {
+                Name = name,
+                UrlAttachment = url
+            });
+        }
+    }
+
+    public class EmailAttachment {
+        public string Name { get; set; }
+        public byte[] FileAttachment { get; set; }
+        public string UrlAttachment { get; set; }
+    }
+
     public class UnimailError {
         public bool IsError { get; }
         public string Msg { get; }
@@ -23,33 +79,21 @@ namespace UnimailCsSdk {
         public int Code { get; set; }
         [JsonPropertyName("msg")]
         public string Msg { get; set; }
+        [JsonPropertyName("data")]
+        public object Data { get; set; }
     }
 
-    public class UnimailParam {
-        public string Host { get; }
-        public string Key { get; }
-
-        public UnimailParam(string key, string host) {
-            this.Host = host;
-            this.Key = key;
-        }
-    }
 
     public class Factory {
         /// <summary>
-        /// 生成 UnimailClient 客户端
+        /// 生成UnimailClient客户端
         /// </summary>
-        /// <param name="key">申请的秘钥</param>
-        /// <returns>UnimailClient</returns>
-        public static UnimailClient New(string key) { return new unimailClient(key); }
-
-        /// <summary>
-        /// 生成 UnimailClient 客户端
-        /// </summary>
-        /// <param name="param"></param>
-        /// <returns>UnimailClient</returns>
-        public static UnimailClient New(UnimailParam param) {
-            return new unimailClient(param.Key, param.Host);
+        /// <param name="key"></param>
+        /// <param name="host"></param>
+        /// <returns></returns>
+        public static UnimailClient New(string key, string host = "") {
+            return string.IsNullOrEmpty(host) ?
+        new unimailClient(key) : new unimailClient(key, host);
         }
     }
 
@@ -72,37 +116,31 @@ namespace UnimailCsSdk {
         Task<bool> CheckConnectionAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// async send email
+        /// send email by UnimailReq
         /// </summary>
-        /// <param name="receiver"></param>
-        /// <param name="subject">email title</param>
-        /// <param name="content">email content</param>
-        Task<UnimailError> SendEmailAsync(string receiver, string subject, string content, CancellationToken cancellationToken = default);
-        /// <summary>
-        /// async batch send email
-        /// </summary>
-        /// <param name="receivers">receiver list</param>
-        /// <param name="subject">email subject</param>
-        /// <param name="content">email content</param>
+        /// <param name="req"></param>
         /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task<UnimailError> BatchSendEmailAsync(List<string> receivers, string subject, string content, CancellationToken cancellationToken = default);
+        /// <returns>UnimailError</returns>
+        Task<UnimailError> SendEmailAsync(UnimailReq req, CancellationToken cancellationToken = default);
     }
 
     internal class unimailClient : UnimailClient {
         public string Host { set; get; }
         public string Key { set; get; }
         private string lang = "zh";
-        private HttpClient client = new HttpClient();
+        private readonly HttpClient client;
 
-        private List<string> supportLang = new List<string>()
+        private readonly List<string> supportLang = new List<string>()
         {
             "en", "zh","vi", "th", "gu", "id"
         };
 
-        public unimailClient(string key, string host = "https://uniapi.allcloud.top") {
+        public unimailClient(string key, string host = Variables.Domain) {
             this.Key = key;
             this.Host = host;
+            this.client = new HttpClient {
+                Timeout = TimeSpan.FromSeconds(Variables.TimeOut)
+            };
         }
 
         public UnimailError SetLanguage(string lang) {
@@ -118,79 +156,98 @@ namespace UnimailCsSdk {
                 var data = JsonSerializer.Serialize(new {
                     authorization = this.Key
                 });
-                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/checkConnection");
-                // 设置 Accept-Language 头
+                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/v2/checkConnection");
                 req.Headers.Add("Accept-Language", this.lang);
                 req.Content = new StringContent(data, Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = await client.SendAsync(req, cancellationToken);
-                string responseBody = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response = await client.SendAsync(req, cancellationToken).ConfigureAwait(false);
                 if (!response.IsSuccessStatusCode) {
                     return false;
                 }
-                string responseData = await response.Content.ReadAsStringAsync();
+                string responseData = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseData);
-                return unimailReturn.Code == 0;
-            } catch (HttpRequestException e) {
+                return unimailReturn != null && unimailReturn.Code == 0;
+            } catch (HttpRequestException) {
+                return false;
+            } catch (JsonException) {
                 return false;
             }
         }
 
-        public async Task<UnimailError> SendEmailAsync(string receiver, string subject, string content, CancellationToken cancellationToken = default) {
-            try {
-                var data = JsonSerializer.Serialize(new {
-                    authorization = this.Key,
-                    receiver = receiver,
-                    title = subject,
-                    content = content
-                });
-                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/sendEmail");
-                // 设置 Accept-Language 头
-                req.Headers.Add("Accept-Language", this.lang);
-                req.Content = new StringContent(data, Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response = await client.SendAsync(req, cancellationToken);
-                string responseBody = await response.Content.ReadAsStringAsync();
-                if (!response.IsSuccessStatusCode) {
-                    return new UnimailError(false, "unimail network error");
-                }
-                string responseData = await response.Content.ReadAsStringAsync();
-                var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseData);
-                return new UnimailError(unimailReturn.Code != 0, unimailReturn.Msg);
-            } catch (HttpRequestException e) {
-                return new UnimailError(false, "unimail network error");
+        public async Task<UnimailError> SendEmailAsync(UnimailReq req, CancellationToken cancellationToken = default) {
+            if (req == null) {
+                return new UnimailError(true, "unimail: request is null");
             }
-        }
 
-        public async Task<UnimailError> BatchSendEmailAsync(List<string> receivers, string subject, string content, CancellationToken cancellationToken = default) {
-            try {
-                var data = JsonSerializer.Serialize(new {
-                    authorization = this.Key,
-                    receivers = receivers,
-                    title = subject,
-                    content = content
-                });
-                var req = new HttpRequestMessage(HttpMethod.Post, this.Host + "/batchSendEmail");
-                // 设置 Accept-Language 头
-                req.Headers.Add("Accept-Language", this.lang);
-                req.Content = new StringContent(data, Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response = await client.SendAsync(req, cancellationToken);
-                string responseBody = await response.Content.ReadAsStringAsync();
-                if (!response.IsSuccessStatusCode) {
-                    return new UnimailError(false, "unimail network error");
-                }
-                string responseData = await response.Content.ReadAsStringAsync();
-                var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseData);
-                return new UnimailError(unimailReturn.Code != 0, unimailReturn.Msg);
-            } catch (HttpRequestException e) {
-                return new UnimailError(false, "unimail network error");
+            if (req.Receivers == null || req.Receivers.Count == 0) {
+                return new UnimailError(true, "receivers is required");
             }
-        }
 
-        // todo
-        public UnimailError CheckResult(string key) {
-            return new UnimailError(false, "server error");
+            if (string.IsNullOrWhiteSpace(req.Subject)) {
+                return new UnimailError(true, "subject is required");
+            }
+
+            try {
+                using (var formData = new MultipartFormDataContent()) {
+                    formData.Add(new StringContent(this.Key), "authorization");
+                    formData.Add(new StringContent(string.Join(";", req.Receivers.Where(x => !string.IsNullOrWhiteSpace(x)))), "receiver");
+                    formData.Add(new StringContent(req.From ?? string.Empty), "from");
+                    if (!string.IsNullOrWhiteSpace(req.Cc)) {
+                        formData.Add(new StringContent(req.Cc), "cc");
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(req.Bcc)) {
+                        formData.Add(new StringContent(req.Bcc), "bcc");
+                    }
+
+                    formData.Add(new StringContent(req.Subject), "subject");
+                    if (!string.IsNullOrWhiteSpace(req.TxtContent)) {
+                        formData.Add(new StringContent(req.TxtContent), "txtContent");
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(req.HtmlContent)) {
+                        formData.Add(new StringContent(req.HtmlContent), "htmlContent");
+                    }
+
+                    if (req.Attachments != null) {
+                        for (var i = 0; i < req.Attachments.Count; i++) {
+                            var attachment = req.Attachments[i];
+                            if (attachment == null) {
+                                continue;
+                            }
+
+                            formData.Add(new StringContent(attachment.Name ?? string.Empty), $"attachments[{i}].name");
+                            if (attachment.FileAttachment != null && attachment.FileAttachment.Length > 0) {
+                                var fileContent = new ByteArrayContent(attachment.FileAttachment);
+                                formData.Add(fileContent, $"attachments[{i}].fileAttachment", attachment.Name ?? $"attachment-{i}");
+                            } else if (!string.IsNullOrWhiteSpace(attachment.UrlAttachment)) {
+                                formData.Add(new StringContent(attachment.UrlAttachment), $"attachments[{i}].urlAttachment");
+                            }
+                        }
+                    }
+
+                    var httpReq = new HttpRequestMessage(HttpMethod.Post, this.Host + "/v2/sendEmail");
+                    httpReq.Headers.Add("Accept-Language", this.lang);
+                    httpReq.Content = formData;
+
+                    HttpResponseMessage response = await client.SendAsync(httpReq, cancellationToken).ConfigureAwait(false);
+                    if (!response.IsSuccessStatusCode) {
+                        return new UnimailError(true, "unimail network error");
+                    }
+
+                    string responseData = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    var unimailReturn = JsonSerializer.Deserialize<UnimailReturn>(responseData);
+                    if (unimailReturn == null) {
+                        return new UnimailError(true, "unimail parse error");
+                    }
+
+                    return new UnimailError(unimailReturn.Code != 0, unimailReturn.Msg);
+                }
+            } catch (HttpRequestException) {
+                return new UnimailError(true, "unimail network error");
+            } catch (JsonException) {
+                return new UnimailError(true, "unimail parse error");
+            }
         }
     }
 }
