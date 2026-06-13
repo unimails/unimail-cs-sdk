@@ -1,5 +1,7 @@
 # unimail-cs-sdk
 
+> 当前分支sdk的版本是v1, 此分支不再进行功能更新, 如果新用户请参考主分支master
+
 unimail 的 cs 语言 sdk, 快速集成到你的项目
 
 [english docs](README.md)

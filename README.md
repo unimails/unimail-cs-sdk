@@ -1,5 +1,7 @@
 # unimail-cs-sdk
 
+> The current branch SDK version is v1. This branch will no longer receive functional updates. For new users, please refer to the main branch "master".
+
 This is a c# SDK for Unimail. Quickly integrate into your project
 
 [中文文档](README_zh.md)
