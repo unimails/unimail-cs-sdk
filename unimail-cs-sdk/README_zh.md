@@ -1,33 +1,33 @@
 # unimail-cs-sdk
 
-> The current SDK version is v2. If you need to use the previous v1 version, please switch to the v1 branch.
+> 当前sdk的版本是v2, 如果你需要用以前的v1版本, 请切换v1分支
 
-This is a c# SDK for Unimail. Quickly integrate into your project
+unimail 的 cs 语言 sdk, 快速集成到你的项目
 
-[中文文档](README_zh.md)
+[english docs](README.md)
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
 <!-- code_chunk_output -->
 
 - [unimail-cs-sdk](#unimail-cs-sdk)
-  - [simple usage](#simple-usage)
+  - [使用](#使用)
   - [api docs](#api-docs)
-  - [support language](#support-language)
+  - [支持的语言](#支持的语言)
 
 <!-- /code_chunk_output -->
 
-## simple usage
+## 使用
 
-- install
+- 安装
 
 ```shell
 <PackageReference Include="UnimailCsSdk" Version="1.1.0" />
 ```
 
-- init a unimail client
+- 初始化客户端
 
-you need a authorization key.
+你需要申请一个 key
 
 ```cs
 internal class Program
@@ -42,7 +42,7 @@ internal class Program
             return;
         }
 
-        var checkConnection = await client.CheckConnectionAsync()GetAwaiter().GetResult();
+        var checkConnection = await client.CheckConnectionAsync().GetAwaiter().GetResult();
         if (!checkConnection)
         {
             Console.WriteLine("connect error");
@@ -53,12 +53,12 @@ internal class Program
 }
 ```
 
-- send email
+- 发邮件
 
 ```cs
     var req = new UnimailReq {
         // Route = "",
-        // From = "Notice",
+        // From = "通知",
         Receivers = new List<string> { "email1", "email2" },
         // Cc = "",
         // Bcc = "",
@@ -66,9 +66,9 @@ internal class Program
         TxtContent = "this is an email from unimail-cs-sdk project",
         HtmlContent = "<div>html content</div>"
     };
-    // add file attachment
+    // 添加文件附件
     req.AppendFile("test.txt", "./attachment.txt");
-    // add uri attachment
+    // 添加uri附件
     // req.AppendUri("text2.txt", "https://...");
     var sendResult = client.SendEmailAsync(req).GetAwaiter().GetResult();
     if (sendResult.IsError) {
@@ -94,9 +94,9 @@ check the host and key is ok
 
 please see usage
 
-## support language
+## 支持的语言
 
-chinese is the default language for the sdk.
+sdk 默认返回的 msg 为中文
 
 - [x] english (en)
 - [x] simple chinese (zh)
@@ -105,8 +105,4 @@ chinese is the default language for the sdk.
 - [x] thai (th)
 - [x] gujarati (gu)
 
-if you want to support other language, please open a issue.
-
-- tips
-
-> If you want to use this SDK, please contact the author via i-curve@qq.com.
+如果你需要添加了更多语言，欢迎提 issue

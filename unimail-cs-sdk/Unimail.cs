@@ -11,11 +11,12 @@ using System.Threading.Tasks;
 
 namespace UnimailCsSdk {
     public class Variables {
-        public const string Version = "1.0.0";
+        public const string Version = "1.1.0";
         public const long TimeOut = 120;
-        public const string Domain = "https://uniapi.allcloud.top";
+        public const string Domain = "https://uniapi.allcloud.top/unimail";
     }
     public class UnimailReq {
+        public string Route { get; set; }
         public string From { get; set; }
         public List<string> Receivers { get; set; } = new List<string>();
         public string Cc { get; set; }
@@ -191,6 +192,9 @@ namespace UnimailCsSdk {
                 using (var formData = new MultipartFormDataContent()) {
                     formData.Add(new StringContent(this.Key), "authorization");
                     formData.Add(new StringContent(string.Join(";", req.Receivers.Where(x => !string.IsNullOrWhiteSpace(x)))), "receiver");
+                    if (!string.IsNullOrEmpty(req.Route)) {
+                        formData.Add(new StringContent(req.Route), "route");
+                    }
                     formData.Add(new StringContent(req.From ?? string.Empty), "from");
                     if (!string.IsNullOrWhiteSpace(req.Cc)) {
                         formData.Add(new StringContent(req.Cc), "cc");
